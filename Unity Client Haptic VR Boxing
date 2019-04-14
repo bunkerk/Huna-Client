@@ -1,1 +1,87 @@
-1
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using System;
+using System.IO;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+
+public class Lefthandmove : MonoBehaviour
+{
+    Socket mySocket;
+    String Host = "192.168.1.4";
+    int Port = 1234;
+    byte[] bytes = new byte[1024];
+    public Transform lefthand;
+
+    // Start is called before the first frame update
+    void Start()
+    {
+
+    }
+
+    void Update()
+    {
+        try
+        {
+            IPEndPoint ep = new IPEndPoint(IPAddress.Parse("192.168.1.4"), 1234);
+            mySocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            mySocket.Connect(ep);
+            int bytesRec = mySocket.Receive(bytes);
+            string s = System.Text.Encoding.UTF8.GetString(bytes);
+            string[] strings = s.Split(':');
+            Vector3 vector = new Vector3(float.Parse(strings[2]), float.Parse(strings[1]), float.Parse(strings[0]));
+            lefthand.position = vector;
+            byte[] msg = Encoding.ASCII.GetBytes("recieved position left");
+            mySocket.Send(msg);
+            mySocket.Close();
+        }
+        catch (Exception e)
+        {
+            Debug.Log("Socket error: " + e);
+        }
+    }
+
+    //Detects Collision start and sends "T1" to server
+    public void OnCollisionEnter(Collision collision)
+    {
+        try
+        {
+            IPEndPoint ep = new IPEndPoint(IPAddress.Parse("192.168.1.4"), 1234);
+            mySocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            mySocket.Connect(ep);
+            int bytesRec = mySocket.Receive(bytes);
+            Debug.Log(Encoding.ASCII.GetString(bytes, 0, bytesRec));
+            byte[] msg = Encoding.ASCII.GetBytes("T2");
+            mySocket.Send(msg);
+            mySocket.Close();
+        }
+        catch (Exception e)
+        {
+            Debug.Log("Socket error: " + e);
+        }
+
+    }
+
+    //Detects Collision stop and sends "F1" to server
+    public void OnCollisionExit(Collision collision)
+    {
+        try
+        {
+            IPEndPoint ep = new IPEndPoint(IPAddress.Parse("192.168.1.4"), 1234);
+            mySocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            mySocket.Connect(ep);
+            int bytesRec = mySocket.Receive(bytes);
+            Debug.Log(Encoding.ASCII.GetString(bytes, 0, bytesRec));
+            byte[] msg = Encoding.ASCII.GetBytes("F2");
+            mySocket.Send(msg);
+            mySocket.Close();
+        }
+        catch (Exception e)
+        {
+            Debug.Log("Socket error: " + e);
+        }
+
+    }
+}
